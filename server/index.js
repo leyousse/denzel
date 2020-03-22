@@ -1,21 +1,33 @@
-const cors = require('cors');
-const express = require('express');
-const helmet = require('helmet');
-const {PORT} = require('./constants');
+const Express = require("express");
+const BodyParser = require("body-parser");
+const MongoClient = require("mongodb").MongoClient;
+const ObjectId = require("mongodb").ObjectID;
 
-const app = express();
+const CONNECTION_URL = "mongodb+srv://user1:gumalgumal@cluster0-2411u.azure.mongodb.net/test?retryWrites=true";
+const DATABASE_NAME = "Denzel_movies";
 
-module.exports = app;
+var app = Express();
 
-app.use(require('body-parser').json());
-app.use(cors());
-app.use(helmet());
+app.use(BodyParser.json());
+app.use(BodyParser.urlencoded({ extended: true }));
 
-app.options('*', cors());
+var database, collection;
 
-app.get('/', (request, response) => {
-  response.send({'ack': true});
+app.listen(3000, () => {
+    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
+        if(error) {
+            throw error;
+        }
+        database = client.db(DATABASE_NAME);
+        collection = database.collection("people");
+        console.log("Connected to `" + DATABASE_NAME + "`!");
+    });
 });
-
-app.listen(PORT);
-console.log(`📡 Running on port ${PORT}`);
+app.get("/person/:id", (request, response) => {
+  collection.findOne({ "_id": new ObjectId(request.params.id) }, (error, result) => {
+      if(error) {
+          return response.status(500).send(error);
+      }
+      response.send(result);
+  });
+});
