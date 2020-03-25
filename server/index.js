@@ -1,33 +1,44 @@
 const Express = require("express");
+const cors = require("cors");
+const helmet = require('helmet');
 const BodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
-const ObjectId = require("mongodb").ObjectID;
-
-const CONNECTION_URL = "mongodb+srv://user1:gumalgumal@cluster0-2411u.azure.mongodb.net/test?retryWrites=true";
-const DATABASE_NAME = "Denzel_movies";
-
+const pop = require("./rest_functions/pop_data");
+const mw = require("./rest_functions/must_watch");
+const sp = require("./rest_functions/specific_movie");
+const {CONNECTION_URL,DATABASE_NAME,DENZEL_IMDB_ID,COLLECTION_NAME,PORT} = require("./constants");
+const imdb = require("./imdb");
 var app = Express();
 
-app.use(BodyParser.json());
-app.use(BodyParser.urlencoded({ extended: true }));
+app.use(require('body-parser').json());
+app.use(cors());
+app.use(helmet());
+app.options('*', cors());
 
-var database, collection;
 
-app.listen(3000, () => {
-    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
-        if(error) {
-            throw error;
-        }
-        database = client.db(DATABASE_NAME);
-        collection = database.collection("people");
-        console.log("Connected to `" + DATABASE_NAME + "`!");
-    });
-});
-app.get("/person/:id", (request, response) => {
-  collection.findOne({ "_id": new ObjectId(request.params.id) }, (error, result) => {
-      if(error) {
-          return response.status(500).send(error);
-      }
-      response.send(result);
+//REST endpoint: n°1 - Populate the database with all the Denzel's movies from IMDb
+app.get("/movies/populate/nm0000243", async (request, response) => {
+    try {
+        pop.populate();
+        const movies=await imdb(DENZEL_IMDB_ID);
+        response.json({ total: movies.length });
+    } catch (error) {
+      throw(error);
+    }
   });
+
+//REST endpoint: n°2 - Fetch a random must-watch movie
+app.get("/movies", async (request, response) => {
+  const must_watch_movie = await mw.mustWatch();
+  response.send(must_watch_movie);
 });
+
+//REST endpoint: n°3 - Fetch a specific movie.
+app.get("/movies/:id", async (request,response) =>{
+  const specific_movie_id = request.params.id;
+  const specific_movie = await sp.specificMovie(specific_movie_id);
+  response.send(specific_movie);
+});
+
+app.listen(9292);
+console.log('📡 Running on port 9292');
