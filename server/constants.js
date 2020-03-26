@@ -7,7 +7,6 @@ const CONNECTION_URL = "mongodb+srv://user1:gumalgumal@cluster0-2411u.azure.mong
 const DATABASE_NAME = "Denzel_movies";
 const COLLECTION_NAME = "denzel"
 const DENZEL_IMDB_ID = 'nm0000243';
-const METASCORE = 77;
 
 module.exports = {
   IMDB_NAME_URL,
@@ -18,6 +17,5 @@ module.exports = {
   CONNECTION_URL,
   DATABASE_NAME,
   COLLECTION_NAME,
-  DENZEL_IMDB_ID,
-  METASCORE
+  DENZEL_IMDB_ID
 };

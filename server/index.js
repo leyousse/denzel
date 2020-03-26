@@ -6,6 +6,8 @@ const MongoClient = require("mongodb").MongoClient;
 const pop = require("./rest_functions/pop_data");
 const mw = require("./rest_functions/must_watch");
 const sp = require("./rest_functions/specific_movie");
+const sm = require("./rest_functions/search_movies");
+const sr = require("./rest_functions/save_review");
 const {CONNECTION_URL,DATABASE_NAME,DENZEL_IMDB_ID,COLLECTION_NAME,PORT} = require("./constants");
 const imdb = require("./imdb");
 var app = Express();
@@ -38,6 +40,27 @@ app.get("/movies/:id", async (request,response) =>{
   const specific_movie_id = request.params.id;
   const specific_movie = await sp.specificMovie(specific_movie_id);
   response.send(specific_movie);
+});
+
+//REST endpoint: n°4 - Search for Denzel's movies.
+app.get("/movies/search", async (request,response)=>{
+  //let limit = parseInt(request.query.limit || 5);
+  let limit=5;
+  console.log(limit);
+  /*var metascore = parseInt(request.query.metascore || 77);
+  console.log(metascore);*/
+  const search_movies = await sm.searchMovies(limit,metascore);
+  response.send(search_movies);
+
+});
+
+//REST endpoint: n°5 - Save a watched date and a review.
+app.post("/movies/:id", async (request,response)=>{
+  const movie_id = request.params.id;
+  const date = request.body.date;
+  const review = request.body.review;
+  result = await sr.saveReview(movie_id,date,review);
+  response.send(result);
 });
 
 app.listen(9292);
