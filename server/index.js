@@ -1,21 +1,25 @@
 const Express = require("express");
 const cors = require("cors");
 const helmet = require('helmet');
-const BodyParser = require("body-parser");
-const MongoClient = require("mongodb").MongoClient;
 const pop = require("./rest_functions/pop_data");
 const mw = require("./rest_functions/must_watch");
 const sp = require("./rest_functions/specific_movie");
 const sm = require("./rest_functions/search_movies");
 const sr = require("./rest_functions/save_review");
-const {CONNECTION_URL,DATABASE_NAME,DENZEL_IMDB_ID,COLLECTION_NAME,PORT} = require("./constants");
+const {DENZEL_IMDB_ID} = require("./constants");
 const imdb = require("./imdb");
+const graphqlHTTP = require("express-graphql");
+const { GraphQLSchema } = require("graphql");
+const {queryType} = require("./graphQL/schema");
+
 var app = Express();
+var schema = new GraphQLSchema({ query: queryType }); //GraphQL
 
 app.use(require('body-parser').json());
 app.use(cors());
 app.use(helmet());
 app.options('*', cors());
+app.use("/graphql",graphqlHTTP({schema,graphiql:true}));
 
 
 //REST endpoint: n°1 - Populate the database with all the Denzel's movies from IMDb
@@ -44,14 +48,12 @@ app.get("/movies/:id", async (request,response) =>{
 
 //REST endpoint: n°4 - Search for Denzel's movies.
 app.get("/movies/search", async (request,response)=>{
-  //let limit = parseInt(request.query.limit || 5);
-  let limit=5;
+  let limit = parseInt(request.query.limit || 5);
   console.log(limit);
-  /*var metascore = parseInt(request.query.metascore || 77);
-  console.log(metascore);*/
+  var metascore = parseInt(request.query.metascore || 77);
+  console.log(metascore);
   const search_movies = await sm.searchMovies(limit,metascore);
   response.send(search_movies);
-
 });
 
 //REST endpoint: n°5 - Save a watched date and a review.
